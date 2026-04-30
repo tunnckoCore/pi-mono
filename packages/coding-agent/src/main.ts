@@ -418,6 +418,7 @@ async function promptForMissingSessionCwd(
 
 export interface MainOptions {
 	extensionFactories?: ExtensionFactory[];
+	restrictAuthCredentials?: boolean;
 }
 
 export async function main(args: string[], options?: MainOptions) {
@@ -518,6 +519,10 @@ export async function main(args: string[], options?: MainOptions) {
 	const resolvedSkillPaths = resolveCliPaths(cwd, parsed.skills);
 	const resolvedPromptTemplatePaths = resolveCliPaths(cwd, parsed.promptTemplates);
 	const resolvedThemePaths = resolveCliPaths(cwd, parsed.themes);
+	const restrictAuthCredentials =
+		parsed.restrictAuthCredentials ||
+		options?.restrictAuthCredentials ||
+		(process.env.PI_CODING_AGENT_AUTH_JSON?.length ?? 0) > 0;
 	const authStorage = AuthStorage.create();
 	const createRuntime: CreateAgentSessionRuntimeFactory = async ({
 		cwd,
@@ -592,6 +597,7 @@ export async function main(args: string[], options?: MainOptions) {
 			tools: sessionOptions.tools,
 			noTools: sessionOptions.noTools,
 			customTools: sessionOptions.customTools,
+			restrictAuthCredentials,
 		});
 		const cliThinkingOverride = parsed.thinking !== undefined || cliThinkingFromModel;
 		if (created.session.model && cliThinkingOverride) {

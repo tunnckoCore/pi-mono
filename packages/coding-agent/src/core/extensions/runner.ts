@@ -188,6 +188,36 @@ export async function emitSessionShutdownEvent(
 	return false;
 }
 
+const RESTRICTED_MODEL_REGISTRY_KEYS = new Set<PropertyKey>([
+	"authStorage",
+	"getApiKeyAndHeaders",
+	"getApiKeyForProvider",
+]);
+
+function createRestrictedModelRegistry(modelRegistry: ModelRegistry): ModelRegistry {
+	return new Proxy(modelRegistry, {
+		get(target, property, receiver) {
+			if (RESTRICTED_MODEL_REGISTRY_KEYS.has(property)) {
+				throw new Error("Model registry auth access is restricted for extensions.");
+			}
+			const value = Reflect.get(target, property, receiver) as unknown;
+			return typeof value === "function" ? value.bind(target) : value;
+		},
+		has(target, property) {
+			return !RESTRICTED_MODEL_REGISTRY_KEYS.has(property) && property in target;
+		},
+		getOwnPropertyDescriptor(target, property) {
+			if (RESTRICTED_MODEL_REGISTRY_KEYS.has(property)) {
+				return undefined;
+			}
+			return Reflect.getOwnPropertyDescriptor(target, property);
+		},
+		ownKeys(target) {
+			return Reflect.ownKeys(target).filter((property) => !RESTRICTED_MODEL_REGISTRY_KEYS.has(property));
+		},
+	}) as ModelRegistry;
+}
+
 const noOpUIContext: ExtensionUIContext = {
 	select: async () => undefined,
 	confirm: async () => false,
@@ -228,6 +258,7 @@ export class ExtensionRunner {
 	private cwd: string;
 	private sessionManager: SessionManager;
 	private modelRegistry: ModelRegistry;
+	private restrictedModelRegistry: ModelRegistry;
 	private errorListeners: Set<ExtensionErrorListener> = new Set();
 	private getModel: () => Model<any> | undefined = () => undefined;
 	private isIdleFn: () => boolean = () => true;
@@ -254,6 +285,7 @@ export class ExtensionRunner {
 		cwd: string,
 		sessionManager: SessionManager,
 		modelRegistry: ModelRegistry,
+		restrictAuthCredentials = false,
 	) {
 		this.extensions = extensions;
 		this.runtime = runtime;
@@ -261,6 +293,9 @@ export class ExtensionRunner {
 		this.cwd = cwd;
 		this.sessionManager = sessionManager;
 		this.modelRegistry = modelRegistry;
+		this.restrictedModelRegistry = restrictAuthCredentials
+			? createRestrictedModelRegistry(modelRegistry)
+			: modelRegistry;
 	}
 
 	bindCore(
@@ -592,7 +627,7 @@ export class ExtensionRunner {
 			},
 			get modelRegistry() {
 				runner.assertActive();
-				return runner.modelRegistry;
+				return runner.restrictedModelRegistry;
 			},
 			get model() {
 				runner.assertActive();

@@ -174,6 +174,13 @@ describe("parseArgs", () => {
 		});
 	});
 
+	describe("--restrict-auth-credentials flag", () => {
+		test("parses --restrict-auth-credentials flag", () => {
+			const result = parseArgs(["--restrict-auth-credentials"]);
+			expect(result.restrictAuthCredentials).toBe(true);
+		});
+	});
+
 	describe("--skill flag", () => {
 		test("parses single --skill", () => {
 			const result = parseArgs(["--skill", "./skill-dir"]);

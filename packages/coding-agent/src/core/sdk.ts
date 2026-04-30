@@ -77,6 +77,8 @@ export interface CreateAgentSessionOptions {
 	settingsManager?: SettingsManager;
 	/** Session start event metadata for extension runtime startup. */
 	sessionStartEvent?: SessionStartEvent;
+	/** Hide auth storage and credential resolvers from extension contexts. */
+	restrictAuthCredentials?: boolean;
 }
 
 /** Result from createAgentSession */
@@ -400,6 +402,7 @@ export async function createAgentSession(options: CreateAgentSessionOptions = {}
 		allowedToolNames,
 		extensionRunnerRef,
 		sessionStartEvent: options.sessionStartEvent,
+		restrictAuthCredentials: options.restrictAuthCredentials,
 	});
 	const extensionsResult = resourceLoader.getExtensions();
 
