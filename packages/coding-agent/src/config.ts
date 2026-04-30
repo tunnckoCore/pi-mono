@@ -337,24 +337,6 @@ export function getShareViewerUrl(gistId: string): string {
 	return `${baseUrl}#${gistId}`;
 }
 
-export function expandHomePath(path: string): string {
-	if (path === "~") return homedir();
-	if (path.startsWith("~/")) return join(homedir(), path.slice(2));
-	return path;
-}
-
-export function getEnvSessionDir(): string | undefined {
-	const envDir = process.env[ENV_CODING_AGENT_SESSION_DIR];
-	return envDir ? expandHomePath(envDir) : undefined;
-}
-
-export function resolveConfiguredSessionDir(
-	cliSessionDir: string | undefined,
-	settingsSessionDir: string | undefined,
-): string | undefined {
-	return cliSessionDir !== undefined ? expandHomePath(cliSessionDir) : (getEnvSessionDir() ?? settingsSessionDir);
-}
-
 // =============================================================================
 // User Config Paths (~/.pi/agent/*)
 // =============================================================================
@@ -363,7 +345,10 @@ export function resolveConfiguredSessionDir(
 export function getAgentDir(): string {
 	const envDir = process.env[ENV_AGENT_DIR];
 	if (envDir) {
-		return expandHomePath(envDir);
+		// Expand tilde to home directory
+		if (envDir === "~") return homedir();
+		if (envDir.startsWith("~/")) return homedir() + envDir.slice(1);
+		return envDir;
 	}
 	return join(homedir(), CONFIG_DIR_NAME, "agent");
 }

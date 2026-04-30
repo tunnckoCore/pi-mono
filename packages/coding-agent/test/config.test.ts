@@ -1,18 +1,7 @@
-import { homedir } from "node:os";
-import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
-import {
-	detectInstallMethod,
-	ENV_CODING_AGENT_SESSION_DIR,
-	expandHomePath,
-	getEnvSessionDir,
-	getSelfUpdateCommand,
-	getUpdateInstruction,
-	resolveConfiguredSessionDir,
-} from "../src/config.js";
+import { detectInstallMethod, getSelfUpdateCommand, getUpdateInstruction } from "../src/config.js";
 
 const execPathDescriptor = Object.getOwnPropertyDescriptor(process, "execPath");
-const originalSessionDirEnv = process.env[ENV_CODING_AGENT_SESSION_DIR];
 
 function setExecPath(value: string): void {
 	Object.defineProperty(process, "execPath", {
@@ -24,11 +13,6 @@ function setExecPath(value: string): void {
 afterEach(() => {
 	if (execPathDescriptor) {
 		Object.defineProperty(process, "execPath", execPathDescriptor);
-	}
-	if (originalSessionDirEnv === undefined) {
-		delete process.env[ENV_CODING_AGENT_SESSION_DIR];
-	} else {
-		process.env[ENV_CODING_AGENT_SESSION_DIR] = originalSessionDirEnv;
 	}
 });
 
@@ -52,29 +36,5 @@ describe("detectInstallMethod", () => {
 		expect(getUpdateInstruction("@mariozechner/pi-coding-agent")).toBe(
 			"Update @mariozechner/pi-coding-agent using the package manager, wrapper, or source checkout that provides this installation.",
 		);
-	});
-});
-
-describe("session directory config", () => {
-	test("expands tilde paths", () => {
-		expect(expandHomePath("~")).toBe(homedir());
-		expect(expandHomePath("~/sessions")).toBe(join(homedir(), "sessions"));
-		expect(expandHomePath("./sessions")).toBe("./sessions");
-	});
-
-	test("reads session directory from environment", () => {
-		process.env[ENV_CODING_AGENT_SESSION_DIR] = "~/pi-sessions";
-
-		expect(getEnvSessionDir()).toBe(join(homedir(), "pi-sessions"));
-	});
-
-	test("resolves session directory precedence", () => {
-		process.env[ENV_CODING_AGENT_SESSION_DIR] = "/env/sessions";
-
-		expect(resolveConfiguredSessionDir("~/cli-sessions", "/settings/sessions")).toBe(join(homedir(), "cli-sessions"));
-		expect(resolveConfiguredSessionDir(undefined, "/settings/sessions")).toBe("/env/sessions");
-		delete process.env[ENV_CODING_AGENT_SESSION_DIR];
-		expect(resolveConfiguredSessionDir(undefined, "/settings/sessions")).toBe("/settings/sessions");
-		expect(resolveConfiguredSessionDir(undefined, undefined)).toBeUndefined();
 	});
 });
