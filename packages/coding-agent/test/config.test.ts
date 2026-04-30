@@ -3,7 +3,6 @@ import { join } from "node:path";
 import { afterEach, describe, expect, test } from "vitest";
 import {
 	detectInstallMethod,
-	ENV_AGENT_SESSION_DIR,
 	ENV_CODING_AGENT_SESSION_DIR,
 	expandHomePath,
 	getEnvSessionDir,
@@ -14,7 +13,6 @@ import {
 
 const execPathDescriptor = Object.getOwnPropertyDescriptor(process, "execPath");
 const originalSessionDirEnv = process.env[ENV_CODING_AGENT_SESSION_DIR];
-const originalLegacySessionDirEnv = process.env[ENV_AGENT_SESSION_DIR];
 
 function setExecPath(value: string): void {
 	Object.defineProperty(process, "execPath", {
@@ -31,11 +29,6 @@ afterEach(() => {
 		delete process.env[ENV_CODING_AGENT_SESSION_DIR];
 	} else {
 		process.env[ENV_CODING_AGENT_SESSION_DIR] = originalSessionDirEnv;
-	}
-	if (originalLegacySessionDirEnv === undefined) {
-		delete process.env[ENV_AGENT_SESSION_DIR];
-	} else {
-		process.env[ENV_AGENT_SESSION_DIR] = originalLegacySessionDirEnv;
 	}
 });
 
@@ -73,20 +66,6 @@ describe("session directory config", () => {
 		process.env[ENV_CODING_AGENT_SESSION_DIR] = "~/pi-sessions";
 
 		expect(getEnvSessionDir()).toBe(join(homedir(), "pi-sessions"));
-	});
-
-	test("supports legacy session directory environment alias", () => {
-		delete process.env[ENV_CODING_AGENT_SESSION_DIR];
-		process.env[ENV_AGENT_SESSION_DIR] = "/tmp/pi-agent-sessions";
-
-		expect(getEnvSessionDir()).toBe("/tmp/pi-agent-sessions");
-	});
-
-	test("prefers primary environment variable over legacy alias", () => {
-		process.env[ENV_CODING_AGENT_SESSION_DIR] = "/tmp/pi-coding-agent-sessions";
-		process.env[ENV_AGENT_SESSION_DIR] = "/tmp/pi-agent-sessions";
-
-		expect(getEnvSessionDir()).toBe("/tmp/pi-coding-agent-sessions");
 	});
 
 	test("resolves session directory precedence", () => {

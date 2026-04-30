@@ -328,7 +328,6 @@ export const VERSION: string = pkg.version || "0.0.0";
 // e.g., PI_CODING_AGENT_DIR or TAU_CODING_AGENT_DIR
 export const ENV_AGENT_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_DIR`;
 export const ENV_CODING_AGENT_SESSION_DIR = `${APP_NAME.toUpperCase()}_CODING_AGENT_SESSION_DIR`;
-export const ENV_AGENT_SESSION_DIR = `${APP_NAME.toUpperCase()}_AGENT_SESSION_DIR`;
 
 const DEFAULT_SHARE_VIEWER_URL = "https://pi.dev/session/";
 
@@ -345,7 +344,7 @@ export function expandHomePath(path: string): string {
 }
 
 export function getEnvSessionDir(): string | undefined {
-	const envDir = process.env[ENV_CODING_AGENT_SESSION_DIR] || process.env[ENV_AGENT_SESSION_DIR];
+	const envDir = process.env[ENV_CODING_AGENT_SESSION_DIR];
 	return envDir ? expandHomePath(envDir) : undefined;
 }
 
